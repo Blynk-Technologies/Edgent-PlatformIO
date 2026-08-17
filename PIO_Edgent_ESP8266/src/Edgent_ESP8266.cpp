@@ -41,7 +41,7 @@
 void setup()
 {
   Serial.begin(115200);
-  delay(3000);  // Wait for serial monitor (remove if not needed)
+  delay(1000);  // Wait for serial monitor (remove if not needed)
   Serial.println();
 
   // The amount of time (in seconds) to wait for the user to configure the device.
