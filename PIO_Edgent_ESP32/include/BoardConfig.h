@@ -58,8 +58,9 @@
   #define BOARD_BUTTON_PIN            9
   #define BOARD_BUTTON_ACTIVE_LOW     true
 
-  #define BOARD_LED_PIN_RGB           8
-  #define BOARD_LED_BRIGHTNESS        32
+  // NOTE: NeoPixel issue https://github.com/adafruit/Adafruit_NeoPixel/issues/450
+  #define BOARD_LED_PIN               8
+  #define BOARD_LED_BRIGHTNESS        64
 
 #elif defined(ARDUINO_ESP32C5_DEV)
 
