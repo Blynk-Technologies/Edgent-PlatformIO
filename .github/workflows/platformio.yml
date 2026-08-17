@@ -1,0 +1,72 @@
+name: PlatformIO
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build ${{ matrix.project }} / ${{ matrix.env }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - project: PIO_Edgent_ESP32
+            env: esp32
+          - project: PIO_Edgent_ESP32
+            env: esp32c3
+          - project: PIO_Edgent_ESP32
+            env: esp32s2
+          - project: PIO_Edgent_ESP32
+            env: esp32s3
+          - project: PIO_Edgent_ESP32
+            env: esp32c2
+          - project: PIO_Edgent_ESP32
+            env: esp32c5
+          - project: PIO_Edgent_ESP32
+            env: esp32c6
+          - project: PIO_Edgent_ESP8266
+            env: esp8266
+          - project: PIO_Edgent_Wio_Terminal
+            env: wio_terminal
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Cache PlatformIO
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.platformio
+            ~/.cache/pip
+          key: ${{ runner.os }}-pio-${{ matrix.project }}-${{ hashFiles(format('{0}/platformio.ini', matrix.project)) }}
+          restore-keys: |
+            ${{ runner.os }}-pio-${{ matrix.project }}-
+            ${{ runner.os }}-pio-
+
+      - name: Install PlatformIO
+        run: pip install --upgrade platformio
+
+      - name: Patch example for CI
+        working-directory: ${{ matrix.project }}
+        run: |
+          sed -i \
+            -e 's|^//#define BLYNK_TEMPLATE_ID.*|#define BLYNK_TEMPLATE_ID           "TMPL000000"|' \
+            -e 's|^//#define BLYNK_TEMPLATE_NAME.*|#define BLYNK_TEMPLATE_NAME         "Device"|' \
+            src/*.cpp
+          grep -n BLYNK_TEMPLATE src/*.cpp
+
+      - name: Build
+        working-directory: ${{ matrix.project }}
+        run: pio run -e ${{ matrix.env }}

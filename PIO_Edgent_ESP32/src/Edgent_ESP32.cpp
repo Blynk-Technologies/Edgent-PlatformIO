@@ -1,56 +1,75 @@
-/*************************************************************
-  Blynk is a platform with iOS and Android apps to control
-  ESP32, Arduino, Raspberry Pi and the likes over the Internet.
-  You can easily build mobile and web interfaces for any
-  projects by simply dragging and dropping widgets.
+/******************************************************************************
+ * 1. Select the environment matching your board in platformio.ini
+ *    (see [platformio] default_envs, or use `pio run -e <env>`).
+ *
+ *    The partition scheme is set per environment via board_build.partitions.
+ *    It is highly recommended to create a custom partition scheme
+ *    optimized for your project (see boards/partitions).
+ *
+ * 2. BoardConfig.h holds the LED and button pins. The configuration matching
+ *    the selected board is picked automatically. If your board is not listed
+ *    there, add it, or edit the "Custom board" section.
+ *
+ * 3. Fill in TEMPLATE_ID and TEMPLATE_NAME from your Blynk Template below.
+ *    Read more: https://bit.ly/BlynkInject
+ *
+ * 4. Build and upload the firmware, then open the serial monitor:
+ *      pio run -t upload
+ *      pio device monitor
+ *
+ * 5. Use the Blynk IoT App to provision your device:
+ *    Menu -> Add new device -> Find devices nearby -> Select your device
+ *
+ *****************************************************************************/
 
-    Downloads, docs, tutorials: https://www.blynk.io
-    Sketch generator:           https://examples.blynk.cc
-    Blynk community:            https://community.blynk.cc
-    Follow us:                  https://www.fb.com/blynkapp
-                                https://twitter.com/blynk_app
-
-  Blynk library is licensed under MIT license
- *************************************************************
-  Blynk.Edgent implements:
-  - Blynk.Inject - Dynamic WiFi credentials provisioning
-  - Blynk.Air    - Over The Air firmware updates
-  - Device state indication using a physical LED
-  - Credentials reset using a physical Button
- *************************************************************/
-
-/* Fill in information from your Blynk Template here */
-/* Read more: https://bit.ly/BlynkInject */
 //#define BLYNK_TEMPLATE_ID           "TMPxxxxxx"
 //#define BLYNK_TEMPLATE_NAME         "Device"
 
-#define BLYNK_FIRMWARE_VERSION        "0.1.0"
+/* White labeling (use this ONLY if you have a branded Blynk App) */
+//#define BLYNK_VENDOR_PREFIX         "Blynk"
+//#define BLYNK_DEFAULT_SERVER        "my-dashboard.com"
+
+/* The firmware version (used for OTA updates) */
+#define BLYNK_FIRMWARE_VERSION      "0.1.0"
 
 #define BLYNK_PRINT Serial
 //#define BLYNK_DEBUG
 
-#define APP_DEBUG
-
-// Uncomment your board, or configure a custom board in Settings.h
-//#define USE_ESP32_DEV_MODULE
-//#define USE_ESP32C3_DEV_MODULE
-//#define USE_ESP32S2_DEV_KIT
-//#define USE_WROVER_BOARD
-//#define USE_TTGO_T7
-//#define USE_TTGO_T7_S3
-//#define USE_TTGO_T_OI
-
-#include "BlynkEdgent.h"
+#include <Arduino.h>
+#include <BlynkEdgent.h>
+#include "Interaction.h"
 
 void setup()
 {
   Serial.begin(115200);
-  delay(100);
+  delay(3000);  // Wait for serial monitor (remove if not needed)
+  Serial.println();
 
+  // The amount of time (in seconds) to wait for the user to configure the device.
+  // If configuration is skipped, the device will enter IDLE mode. Default: 10 min
+  BlynkEdgent.setConfigTimeout(10*60);
+
+  // The amount of times the board enters the config mode automatically.
+  // NOTE: 0 means unlimited, and is only useful for testing. Default: 10
+  BlynkEdgent.setConfigSkipLimit(0);
+
+  // Edgent state indication and button interaction
+  interaction.begin();
+  BlynkEdgent.onStateChange([](){
+    BLYNK_LOG("State: %s", BlynkEdgent.getStateName());
+    interaction.updateIndicator();
+  });
+
+  // Initialize Blynk.Edgent
   BlynkEdgent.begin();
+
+  // Attach Blynk console to the Serial
+  BlynkEdgent.initConsole(BLYNK_PRINT);
 }
 
-void loop() {
+void loop()
+{
   BlynkEdgent.run();
+  interaction.run();
+  delay(1);
 }
-
